@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Model Documentation</title>
+</head>
+<body>
+    <h1>Data Model Documentation</h1>
+    <h2>User Entity</h2>
+    <p>The user entity represents individuals who can log in and out of the system. Each user has the following attributes:</p>
+    <ul>
+        <li><b>ime</b>: The first name of the user.</li>
+        <li><b>priimek</b>: The surname of the user.</li>
+        <li><b>email</b>: The email address of the user, used for login and communication.</li>
+        <li><b>dan</b>: An array of objects representing days, with each object containing:
+            <ul>
+                <li><b>datum</b>: The date of the entry/exit.</li>
+                <li><b>vhodi</b>: An array of strings, each representing a timestamp when the user entered.</li>
+                <li><b>izhodi</b>: An array of strings, each representing a timestamp when the user exited.</li>
+            </ul>
+        </li>
+        <li><b>hash</b>: A hash of the user's password for security.</li>
+        <li><b>salt</b>: A unique salt for hashing the password, enhancing security.</li>
+    </ul>
+
+    <h2>Data Availability and Synchronization</h2>
+    <p>
+        <b>On-Device Data:</b> The application will always store the user's basic information (name, email) and the hash/salt for authentication on the device.
+    </p>
+    <p>
+        <b>Server-Only Data:</b> Detailed logs of user entries and exits are stored only on the server to maintain data integrity and prevent tampering.
+    </p>
+    <p>
+        <b>Synchronization:</b> Data synchronization occurs in real-time for login and entry/exit recording. Full synchronization of logs is done daily to ensure the user's device is up-to-date with all recent activities.
+    </p>
+</body>
+</html>
