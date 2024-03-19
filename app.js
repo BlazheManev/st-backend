@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 app.use(express.json());
 const path = require('path');
 
-const userRoutes = require('./routes/UserRoutes'); 
+const userRoutes = require('./routes/userRoutes'); 
 const connectDB = require('./utilities/databaseConection'); 
 const staticRoutes = require('./routes/staticRoutes.js'); //
 
