@@ -1,42 +1,46 @@
-var express = require('express');
+var express = require("express");
 var router = express.Router();
-var userController = require('../controllers/userController.js');
-const auth = require('../middleware/auth');
+var userController = require("../controllers/userController.js");
+const auth = require("../middleware/auth");
 
 /*
  * GET
  */
-router.get('/', auth, userController.list);
+router.get("/", auth, userController.list);
 
 /*
  * GET
  */
-router.get('/:id', auth, userController.show);
+router.get("/:id", auth, userController.show);
 
 /*
  * POST
  */
-router.post('/', userController.create);
+router.post("/", userController.create);
 
 /*
  * PUT
  */
-router.put('/:id', auth, userController.update);
+router.put("/:id", auth, userController.update);
 
 /*
  * DELETE
  */
-router.delete('/:id', auth, userController.remove);
+router.delete("/:id", auth, userController.remove);
 
 /*
  * LOGIN
  */
-router.post('/login', userController.login); 
+router.post("/login", userController.login);
 
 /*
  * RECORD
  */
-router.post('/:id/record', auth, userController.recordEntryOrExit);
+router.post("/:id/record", auth, userController.recordEntryOrExit);
 
+/*
+ * CALCULATE WORKING HOURS
+ */
+router.post("/calculateWorkingHours", userController.calculateWorkedTime);
 
 module.exports = router;
