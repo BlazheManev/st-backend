@@ -231,7 +231,7 @@ module.exports = {
   /**
    * userController.calculateWorkedTime()
    */
-  calculateWorkedTime: async function (req, res) {
+  calculateWorkedTimeByInterval: async function (req, res) {
     const { email, startDate, endDate } = req.body;
 
     try {
@@ -288,6 +288,9 @@ module.exports = {
       });
     }
   },
+    /**
+   * userController.checkCurrentStatus()
+   */
   checkCurrentStatus: async function (req, res) {
     try {
       const currentTime = new Date();
@@ -328,7 +331,9 @@ module.exports = {
       });
     }
   },
-
+ /**
+   * userController.calculateMostWorkedLastMonth()
+   */
   calculateMostWorkedLastMonth: async function (req, res) {
     try {
       const currentTime = new Date();
@@ -388,6 +393,45 @@ module.exports = {
       console.error(err);
       return res.status(500).json({
         message: 'Error when calculating most worked time',
+        error: err.message
+      });
+    }
+  },
+  /**
+   * userController.getWorkingHours()
+   */
+  getWorkingHours: async function (req, res) {
+    const userId = req.params.id;
+
+    try {
+      const user = await UserModel.findById(userId);
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const workedHours = user.dan.map(day => {
+        let totalSeconds = 0;
+        for (let i = 0; i < day.vhodi.length; i++) {
+          if (day.izhodi[i]) {
+            const entryTime = new Date(`${day.datum.toISOString().split("T")[0]}T${day.vhodi[i]}Z`);
+            const exitTime = new Date(`${day.datum.toISOString().split("T")[0]}T${day.izhodi[i]}Z`);
+            totalSeconds += (exitTime - entryTime) / 1000; // in seconds
+          }
+        }
+        return {
+          datum: day.datum,
+          hours: Math.floor(totalSeconds / 3600),
+          minutes: Math.floor((totalSeconds % 3600) / 60),
+          seconds: totalSeconds % 60
+        };
+      });
+
+      return res.status(200).json(workedHours);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        message: "Error when calculating working hours",
         error: err.message
       });
     }

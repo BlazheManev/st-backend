@@ -41,7 +41,7 @@ router.post("/:id/record", auth, userController.recordEntryOrExit);
 /*
  * CALCULATE WORKING HOURS
  */
-router.post("/calculateWorkingHours", userController.calculateWorkedTime);
+router.post("/calculateWorkingHours", userController.calculateWorkedTimeByInterval);
 
 
 /*
@@ -53,5 +53,10 @@ router.get("/checkCurrentStatus", userController.checkCurrentStatus);
  * MOST HOURS WORKED IN LAST MONTH
  */
 router.get("/mostWorkingHours", userController.calculateMostWorkedLastMonth);
+
+/*
+ * Get Working Hours
+ */
+router.get('/:id/working-hours', auth, userController.getWorkingHours);
 
 module.exports = router;
