@@ -171,50 +171,64 @@ module.exports = {
    */
   recordEntryOrExit: async function (req, res) {
     try {
-      const userId = req.params.id; // assuming you're passing the user's ID as a parameter
-      const type = req.body.type; // expecting "vhod" or "izhod"
-      const currentTime = new Date();
-      const currentDate = currentTime.toISOString().split("T")[0]; // format as YYYY-MM-DD
-      const currentTimeString = currentTime.toTimeString().split(" ")[0]; // format as HH:MM:SS
+        const userId = req.params.id; // assuming you're passing the user's ID as a parameter
+        const type = req.body.type; // expecting "vhod" or "izhod"
+        const currentTime = new Date();
+        const currentDate = currentTime.toISOString().split('T')[0]; // format as YYYY-MM-DD
+        const currentTimeString = currentTime.toTimeString().split(' ')[0]; // format as HH:MM:SS
 
-      const user = await UserModel.findById(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      // Check if entry for current date exists
-      let dateEntry = user.dan.find(
-        (entry) => entry.datum.toISOString().split("T")[0] === currentDate
-      );
-
-      if (dateEntry) {
-        // Date exists, update vhodi or izhodi
-        if (type === "vhod") {
-          dateEntry.vhodi.push(currentTimeString);
-        } else if (type === "izhod") {
-          dateEntry.izhodi.push(currentTimeString);
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
         }
-      } else {
-        // Date doesn't exist, create new date entry
-        const newEntry = {
-          datum: currentDate,
-          vhodi: type === "vhod" ? [currentTimeString] : [],
-          izhodi: type === "izhod" ? [currentTimeString] : [],
-        };
-        user.dan.push(newEntry);
-      }
 
-      await user.save();
-      return res.status(200).json(user);
+        // Check if entry for current date exists
+        let dateEntry = user.dan.find(entry => entry.datum.toISOString().split('T')[0] === currentDate);
+
+        if (dateEntry) {
+            // Determine the last scan type and time
+            const lastVhodTime = dateEntry.vhodi[dateEntry.vhodi.length - 1];
+            const lastIzhodTime = dateEntry.izhodi[dateEntry.izhodi.length - 1];
+            const lastVhodTimeInMs = lastVhodTime ? new Date(`${currentDate}T${lastVhodTime}Z`).getTime() : 0;
+            const lastIzhodTimeInMs = lastIzhodTime ? new Date(`${currentDate}T${lastIzhodTime}Z`).getTime() : 0;
+            const lastScanTimeInMs = Math.max(lastVhodTimeInMs, lastIzhodTimeInMs);
+            const lastScanType = lastVhodTimeInMs > lastIzhodTimeInMs ? 'vhod' : 'izhod';
+
+            // Check if the last scan type is the same as the current one
+            if (lastScanType === type) {
+                return res.status(400).json({ message: `Cannot record the same type (${type}) consecutively.` });
+            }
+
+            // Update vhodi or izhodi
+            if (type === 'vhod') {
+                dateEntry.vhodi.push(currentTimeString);
+            } else if (type === 'izhod') {
+                dateEntry.izhodi.push(currentTimeString);
+            }
+        } else {
+            // Date doesn't exist, create new date entry
+            const newEntry = {
+                datum: currentDate,
+                vhodi: type === 'vhod' ? [currentTimeString] : [],
+                izhodi: type === 'izhod' ? [currentTimeString] : []
+            };
+            user.dan.push(newEntry);
+        }
+
+        await user.save();
+        return res.status(200).json(user);
     } catch (err) {
-      console.error(err);
-      return res.status(500).json({
-        message: "Error when updating entry/exit",
-        error: err,
-      });
+        console.error(err);
+        return res.status(500).json({
+            message: 'Error when updating entry/exit',
+            error: err
+        });
     }
-  },
+},
 
+  /**
+   * userController.calculateWorkedTime()
+   */
   calculateWorkedTime: async function (req, res) {
     const { email, startDate, endDate } = req.body;
 
