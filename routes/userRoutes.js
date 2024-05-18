@@ -34,7 +34,7 @@ router.delete('/:id', auth, userController.remove);
 router.post('/login', userController.login); 
 
 /*
- * LOGIN
+ * RECORD
  */
 router.post('/:id/record', auth, userController.recordEntryOrExit);
 
