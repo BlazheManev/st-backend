@@ -16,7 +16,7 @@ router.get('/:id', auth, userController.show);
 /*
  * POST
  */
-router.post('/', auth, userController.create);
+router.post('/', userController.create);
 
 /*
  * PUT

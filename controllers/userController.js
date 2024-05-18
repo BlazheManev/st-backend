@@ -2,6 +2,7 @@ var UserModel = require('../models/userModel.js');
 var crypto = require('crypto'); 
 const { validatePassword } = require('../utilities/passwordUtility'); // Import the validatePassword function
 const jwt = require('jsonwebtoken');
+const webpush = require('web-push'); // Make sure you have web-push installed
 
 /**
  * userController.js
@@ -56,8 +57,6 @@ module.exports = {
         try {
             // Generating a unique salt for a new user
             var salt = crypto.randomBytes(16).toString('hex'); 
-            console.log(req.body)
-            console.log(req.body.password)
             // Hashing user's password with the salt
             var hash = crypto.pbkdf2Sync(req.body.password, salt, 1000, 64, 'sha512').toString('hex'); 
       
