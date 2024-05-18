@@ -60,7 +60,7 @@ module.exports = {
       var hash = crypto
         .pbkdf2Sync(req.body.password, salt, 1000, 64, "sha512")
         .toString("hex");
-  
+
       var User = new UserModel({
         ime: req.body.ime,
         priimek: req.body.priimek,
@@ -70,7 +70,7 @@ module.exports = {
         salt: salt,
         roles: req.body.roles || ["WORKER"]  // Accept roles from request body or default to "WORKER"
       });
-  
+
       // Saving the new user to the database
       const savedUser = await User.save();
       return res.status(201).json(savedUser);
@@ -82,7 +82,7 @@ module.exports = {
       });
     }
   },
-  
+
   /**
    * userController.update()
    */
@@ -122,14 +122,14 @@ module.exports = {
       if (!user) {
         return res.status(401).json({ message: "User not found" });
       }
-  
+
       if (validatePassword(user, req.body.password)) {
         const payload = {
           userId: user._id,
           email: user.email,
-          roles: user.roles, 
+          roles: user.roles,
         };
-  
+
         const token = jwt.sign(payload, process.env.JWT_SECRET, {
           expiresIn: "1h",
         });
@@ -173,60 +173,60 @@ module.exports = {
    */
   recordEntryOrExit: async function (req, res) {
     try {
-        const userId = req.params.id; // assuming you're passing the user's ID as a parameter
-        const type = req.body.type; // expecting "vhod" or "izhod"
-        const currentTime = new Date();
-        const currentDate = currentTime.toISOString().split('T')[0]; // format as YYYY-MM-DD
-        const currentTimeString = currentTime.toTimeString().split(' ')[0]; // format as HH:MM:SS
+      const userId = req.params.id; // assuming you're passing the user's ID as a parameter
+      const type = req.body.type; // expecting "vhod" or "izhod"
+      const currentTime = new Date();
+      const currentDate = currentTime.toISOString().split('T')[0]; // format as YYYY-MM-DD
+      const currentTimeString = currentTime.toTimeString().split(' ')[0]; // format as HH:MM:SS
 
-        const user = await UserModel.findById(userId);
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
+      const user = await UserModel.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Check if entry for current date exists
+      let dateEntry = user.dan.find(entry => entry.datum.toISOString().split('T')[0] === currentDate);
+
+      if (dateEntry) {
+        // Determine the last scan type and time
+        const lastVhodTime = dateEntry.vhodi[dateEntry.vhodi.length - 1];
+        const lastIzhodTime = dateEntry.izhodi[dateEntry.izhodi.length - 1];
+        const lastVhodTimeInMs = lastVhodTime ? new Date(`${currentDate}T${lastVhodTime}Z`).getTime() : 0;
+        const lastIzhodTimeInMs = lastIzhodTime ? new Date(`${currentDate}T${lastIzhodTime}Z`).getTime() : 0;
+        const lastScanTimeInMs = Math.max(lastVhodTimeInMs, lastIzhodTimeInMs);
+        const lastScanType = lastVhodTimeInMs > lastIzhodTimeInMs ? 'vhod' : 'izhod';
+
+        // Check if the last scan type is the same as the current one
+        if (lastScanType === type) {
+          return res.status(400).json({ message: `Cannot record the same type (${type}) consecutively.` });
         }
 
-        // Check if entry for current date exists
-        let dateEntry = user.dan.find(entry => entry.datum.toISOString().split('T')[0] === currentDate);
-
-        if (dateEntry) {
-            // Determine the last scan type and time
-            const lastVhodTime = dateEntry.vhodi[dateEntry.vhodi.length - 1];
-            const lastIzhodTime = dateEntry.izhodi[dateEntry.izhodi.length - 1];
-            const lastVhodTimeInMs = lastVhodTime ? new Date(`${currentDate}T${lastVhodTime}Z`).getTime() : 0;
-            const lastIzhodTimeInMs = lastIzhodTime ? new Date(`${currentDate}T${lastIzhodTime}Z`).getTime() : 0;
-            const lastScanTimeInMs = Math.max(lastVhodTimeInMs, lastIzhodTimeInMs);
-            const lastScanType = lastVhodTimeInMs > lastIzhodTimeInMs ? 'vhod' : 'izhod';
-
-            // Check if the last scan type is the same as the current one
-            if (lastScanType === type) {
-                return res.status(400).json({ message: `Cannot record the same type (${type}) consecutively.` });
-            }
-
-            // Update vhodi or izhodi
-            if (type === 'vhod') {
-                dateEntry.vhodi.push(currentTimeString);
-            } else if (type === 'izhod') {
-                dateEntry.izhodi.push(currentTimeString);
-            }
-        } else {
-            // Date doesn't exist, create new date entry
-            const newEntry = {
-                datum: currentDate,
-                vhodi: type === 'vhod' ? [currentTimeString] : [],
-                izhodi: type === 'izhod' ? [currentTimeString] : []
-            };
-            user.dan.push(newEntry);
+        // Update vhodi or izhodi
+        if (type === 'vhod') {
+          dateEntry.vhodi.push(currentTimeString);
+        } else if (type === 'izhod') {
+          dateEntry.izhodi.push(currentTimeString);
         }
+      } else {
+        // Date doesn't exist, create new date entry
+        const newEntry = {
+          datum: currentDate,
+          vhodi: type === 'vhod' ? [currentTimeString] : [],
+          izhodi: type === 'izhod' ? [currentTimeString] : []
+        };
+        user.dan.push(newEntry);
+      }
 
-        await user.save();
-        return res.status(200).json(user);
+      await user.save();
+      return res.status(200).json(user);
     } catch (err) {
-        console.error(err);
-        return res.status(500).json({
-            message: 'Error when updating entry/exit',
-            error: err
-        });
+      console.error(err);
+      return res.status(500).json({
+        message: 'Error when updating entry/exit',
+        error: err
+      });
     }
-},
+  },
 
   /**
    * userController.calculateWorkedTime()
@@ -285,6 +285,46 @@ module.exports = {
       return res.status(500).json({
         message: "Error when calculating worked time",
         error: err.message,
+      });
+    }
+  },
+  checkCurrentStatus: async function (req, res) {
+    try {
+      const currentTime = new Date();
+      const currentDate = currentTime.toISOString().split('T')[0]; // format as YYYY-MM-DD
+      const currentTimeString = currentTime.toTimeString().split(' ')[0]; // format as HH:MM:SS
+
+      const users = await UserModel.find();
+
+      const usersInCompany = [];
+
+      for (const user of users) {
+        const { dan } = user;
+
+        // Check if the user has any entries for the current date
+        const dateEntry = dan.find(entry => entry.datum.toISOString().split('T')[0] === currentDate);
+
+        if (dateEntry) {
+          // User has an entry for the current date
+          const lastEntryTime = dateEntry.vhodi[dateEntry.vhodi.length - 1]; // Get the last entry time
+
+          // Check if the user has checked out (last entry has a corresponding exit)
+          if (dateEntry.izhodi.length < dateEntry.vhodi.length || lastEntryTime > currentTimeString) {
+            usersInCompany.push({
+              userId: user._id,
+              userName: user.ime + ' ' + user.priimek,
+              entryTime: lastEntryTime
+            });
+          }
+        }
+      }
+
+      return res.status(200).json(usersInCompany);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        message: 'Error when checking current status',
+        error: err.message
       });
     }
   }

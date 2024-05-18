@@ -43,4 +43,10 @@ router.post("/:id/record", auth, userController.recordEntryOrExit);
  */
 router.post("/calculateWorkingHours", userController.calculateWorkedTime);
 
+/*
+ * CALCULATE WORKING HOURS
+ */
+
+router.post("/checkCurrentStatus", userController.checkCurrentStatus);
+
 module.exports = router;
