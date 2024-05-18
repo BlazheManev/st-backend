@@ -11,7 +11,8 @@ const userSchema = mongoose.Schema({
         izhodi: [String]
     }],
     hash : String, 
-    salt : String 
+    salt : String,
+    roles: { type: [String], default: ["WORKER"] }  // Default role to "USER"
 });
 
 module.exports = mongoose.model('User', userSchema);

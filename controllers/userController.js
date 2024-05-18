@@ -60,7 +60,7 @@ module.exports = {
       var hash = crypto
         .pbkdf2Sync(req.body.password, salt, 1000, 64, "sha512")
         .toString("hex");
-
+  
       var User = new UserModel({
         ime: req.body.ime,
         priimek: req.body.priimek,
@@ -68,8 +68,9 @@ module.exports = {
         dan: req.body.dan, // Expecting an array of objects with datum, vhodi, izhodi
         hash: hash,
         salt: salt,
+        roles: req.body.roles || ["WORKER"]  // Accept roles from request body or default to "WORKER"
       });
-
+  
       // Saving the new user to the database
       const savedUser = await User.save();
       return res.status(201).json(savedUser);
@@ -81,7 +82,7 @@ module.exports = {
       });
     }
   },
-
+  
   /**
    * userController.update()
    */
@@ -121,13 +122,14 @@ module.exports = {
       if (!user) {
         return res.status(401).json({ message: "User not found" });
       }
-
+  
       if (validatePassword(user, req.body.password)) {
         const payload = {
           userId: user._id,
           email: user.email,
+          roles: user.roles, 
         };
-
+  
         const token = jwt.sign(payload, process.env.JWT_SECRET, {
           expiresIn: "1h",
         });
