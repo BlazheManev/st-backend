@@ -68,7 +68,8 @@ module.exports = {
         dan: req.body.dan, // Expecting an array of objects with datum, vhodi, izhodi
         hash: hash,
         salt: salt,
-        roles: req.body.roles || ["WORKER"]  // Accept roles from request body or default to "WORKER"
+        roles: req.body.roles || ["WORKER"], // Accept roles from request body or default to "WORKER"
+        wagePerHour: req.body.wagePerHour, // Add wage per hour
       });
 
       // Saving the new user to the database
@@ -101,6 +102,9 @@ module.exports = {
       user.priimek = req.body.priimek ? req.body.priimek : user.priimek;
       user.dan = req.body.dan ? req.body.dan : user.dan;
       user.email = req.body.email ? req.body.email : user.email;
+      user.wagePerHour = req.body.wagePerHour
+        ? req.body.wagePerHour
+        : user.wagePerHour;
 
       const updatedUser = await user.save();
       return res.json(updatedUser);
@@ -176,8 +180,8 @@ module.exports = {
       const userId = req.params.id; // assuming you're passing the user's ID as a parameter
       const type = req.body.type; // expecting "vhod" or "izhod"
       const currentTime = new Date();
-      const currentDate = currentTime.toISOString().split('T')[0]; // format as YYYY-MM-DD
-      const currentTimeString = currentTime.toTimeString().split(' ')[0]; // format as HH:MM:SS
+      const currentDate = currentTime.toISOString().split("T")[0]; // format as YYYY-MM-DD
+      const currentTimeString = currentTime.toTimeString().split(" ")[0]; // format as HH:MM:SS
 
       const user = await UserModel.findById(userId);
       if (!user) {
@@ -185,34 +189,45 @@ module.exports = {
       }
 
       // Check if entry for current date exists
-      let dateEntry = user.dan.find(entry => entry.datum.toISOString().split('T')[0] === currentDate);
+      let dateEntry = user.dan.find(
+        (entry) => entry.datum.toISOString().split("T")[0] === currentDate
+      );
 
       if (dateEntry) {
         // Determine the last scan type and time
         const lastVhodTime = dateEntry.vhodi[dateEntry.vhodi.length - 1];
         const lastIzhodTime = dateEntry.izhodi[dateEntry.izhodi.length - 1];
-        const lastVhodTimeInMs = lastVhodTime ? new Date(`${currentDate}T${lastVhodTime}Z`).getTime() : 0;
-        const lastIzhodTimeInMs = lastIzhodTime ? new Date(`${currentDate}T${lastIzhodTime}Z`).getTime() : 0;
+        const lastVhodTimeInMs = lastVhodTime
+          ? new Date(`${currentDate}T${lastVhodTime}Z`).getTime()
+          : 0;
+        const lastIzhodTimeInMs = lastIzhodTime
+          ? new Date(`${currentDate}T${lastIzhodTime}Z`).getTime()
+          : 0;
         const lastScanTimeInMs = Math.max(lastVhodTimeInMs, lastIzhodTimeInMs);
-        const lastScanType = lastVhodTimeInMs > lastIzhodTimeInMs ? 'vhod' : 'izhod';
+        const lastScanType =
+          lastVhodTimeInMs > lastIzhodTimeInMs ? "vhod" : "izhod";
 
         // Check if the last scan type is the same as the current one
         if (lastScanType === type) {
-          return res.status(400).json({ message: `Cannot record the same type (${type}) consecutively.` });
+          return res
+            .status(400)
+            .json({
+              message: `Cannot record the same type (${type}) consecutively.`,
+            });
         }
 
         // Update vhodi or izhodi
-        if (type === 'vhod') {
+        if (type === "vhod") {
           dateEntry.vhodi.push(currentTimeString);
-        } else if (type === 'izhod') {
+        } else if (type === "izhod") {
           dateEntry.izhodi.push(currentTimeString);
         }
       } else {
         // Date doesn't exist, create new date entry
         const newEntry = {
           datum: currentDate,
-          vhodi: type === 'vhod' ? [currentTimeString] : [],
-          izhodi: type === 'izhod' ? [currentTimeString] : []
+          vhodi: type === "vhod" ? [currentTimeString] : [],
+          izhodi: type === "izhod" ? [currentTimeString] : [],
         };
         user.dan.push(newEntry);
       }
@@ -222,8 +237,8 @@ module.exports = {
     } catch (err) {
       console.error(err);
       return res.status(500).json({
-        message: 'Error when updating entry/exit',
-        error: err
+        message: "Error when updating entry/exit",
+        error: err,
       });
     }
   },
@@ -288,14 +303,14 @@ module.exports = {
       });
     }
   },
-    /**
+  /**
    * userController.checkCurrentStatus()
    */
   checkCurrentStatus: async function (req, res) {
     try {
       const currentTime = new Date();
-      const currentDate = currentTime.toISOString().split('T')[0]; // format as YYYY-MM-DD
-      const currentTimeString = currentTime.toTimeString().split(' ')[0]; // format as HH:MM:SS
+      const currentDate = currentTime.toISOString().split("T")[0]; // format as YYYY-MM-DD
+      const currentTimeString = currentTime.toTimeString().split(" ")[0]; // format as HH:MM:SS
 
       const users = await UserModel.find();
 
@@ -305,18 +320,23 @@ module.exports = {
         const { dan } = user;
 
         // Check if the user has any entries for the current date
-        const dateEntry = dan.find(entry => entry.datum.toISOString().split('T')[0] === currentDate);
+        const dateEntry = dan.find(
+          (entry) => entry.datum.toISOString().split("T")[0] === currentDate
+        );
 
         if (dateEntry) {
           // User has an entry for the current date
           const lastEntryTime = dateEntry.vhodi[dateEntry.vhodi.length - 1]; // Get the last entry time
 
           // Check if the user has checked out (last entry has a corresponding exit)
-          if (dateEntry.izhodi.length < dateEntry.vhodi.length || lastEntryTime > currentTimeString) {
+          if (
+            dateEntry.izhodi.length < dateEntry.vhodi.length ||
+            lastEntryTime > currentTimeString
+          ) {
             usersInCompany.push({
               userId: user._id,
-              userName: user.ime + ' ' + user.priimek,
-              entryTime: lastEntryTime
+              userName: user.ime + " " + user.priimek,
+              entryTime: lastEntryTime,
             });
           }
         }
@@ -326,12 +346,12 @@ module.exports = {
     } catch (err) {
       console.error(err);
       return res.status(500).json({
-        message: 'Error when checking current status',
-        error: err.message
+        message: "Error when checking current status",
+        error: err.message,
       });
     }
   },
- /**
+  /**
    * userController.calculateMostWorkedLastMonth()
    */
   calculateMostWorkedLastMonth: async function (req, res) {
@@ -349,17 +369,21 @@ module.exports = {
         const { dan } = user;
         let totalWorkedSeconds = 0;
 
-        const relevantDays = dan.filter(day => {
+        const relevantDays = dan.filter((day) => {
           const dayDate = new Date(day.datum);
           return dayDate >= lastMonth && dayDate <= currentTime;
         });
 
-        relevantDays.forEach(day => {
+        relevantDays.forEach((day) => {
           const { vhodi, izhodi } = day;
           for (let i = 0; i < vhodi.length; i++) {
             if (izhodi[i]) {
-              const entryTime = new Date(`${day.datum.toISOString().split('T')[0]}T${vhodi[i]}Z`);
-              const exitTime = new Date(`${day.datum.toISOString().split('T')[0]}T${izhodi[i]}Z`);
+              const entryTime = new Date(
+                `${day.datum.toISOString().split("T")[0]}T${vhodi[i]}Z`
+              );
+              const exitTime = new Date(
+                `${day.datum.toISOString().split("T")[0]}T${izhodi[i]}Z`
+              );
               const workedTime = (exitTime - entryTime) / 1000; // in seconds
               totalWorkedSeconds += workedTime;
             }
@@ -379,21 +403,21 @@ module.exports = {
 
         return res.status(200).json({
           userId: mostWorkedUser._id,
-          userName: mostWorkedUser.ime + ' ' + mostWorkedUser.priimek,
+          userName: mostWorkedUser.ime + " " + mostWorkedUser.priimek,
           hours: totalWorkedHours,
           minutes: totalWorkedMinutes,
-          seconds: totalWorkedSecondsLeft
+          seconds: totalWorkedSecondsLeft,
         });
       } else {
         return res.status(200).json({
-          message: 'No work records found for the last month.'
+          message: "No work records found for the last month.",
         });
       }
     } catch (err) {
       console.error(err);
       return res.status(500).json({
-        message: 'Error when calculating most worked time',
-        error: err.message
+        message: "Error when calculating most worked time",
+        error: err.message,
       });
     }
   },
@@ -410,12 +434,16 @@ module.exports = {
         return res.status(404).json({ message: "User not found" });
       }
 
-      const workedHours = user.dan.map(day => {
+      const workedHours = user.dan.map((day) => {
         let totalSeconds = 0;
         for (let i = 0; i < day.vhodi.length; i++) {
           if (day.izhodi[i]) {
-            const entryTime = new Date(`${day.datum.toISOString().split("T")[0]}T${day.vhodi[i]}Z`);
-            const exitTime = new Date(`${day.datum.toISOString().split("T")[0]}T${day.izhodi[i]}Z`);
+            const entryTime = new Date(
+              `${day.datum.toISOString().split("T")[0]}T${day.vhodi[i]}Z`
+            );
+            const exitTime = new Date(
+              `${day.datum.toISOString().split("T")[0]}T${day.izhodi[i]}Z`
+            );
             totalSeconds += (exitTime - entryTime) / 1000; // in seconds
           }
         }
@@ -423,7 +451,7 @@ module.exports = {
           datum: day.datum,
           hours: Math.floor(totalSeconds / 3600),
           minutes: Math.floor((totalSeconds % 3600) / 60),
-          seconds: totalSeconds % 60
+          seconds: totalSeconds % 60,
         };
       });
 
@@ -432,8 +460,52 @@ module.exports = {
       console.error(err);
       return res.status(500).json({
         message: "Error when calculating working hours",
-        error: err.message
+        error: err.message,
       });
     }
-  }
+  },
+  /**
+   * userController.calculateTotalEarnings()
+   */
+  calculateTotalEarnings: async function (req, res) {
+    const userId = req.params.id;
+
+    try {
+      const user = await UserModel.findById(userId);
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const workedHours = user.dan.map((day) => {
+        let totalSeconds = 0;
+        for (let i = 0; i < day.vhodi.length; i++) {
+          if (day.izhodi[i]) {
+            const entryTime = new Date(
+              `${day.datum.toISOString().split("T")[0]}T${day.vhodi[i]}Z`
+            );
+            const exitTime = new Date(
+              `${day.datum.toISOString().split("T")[0]}T${day.izhodi[i]}Z`
+            );
+            totalSeconds += (exitTime - entryTime) / 1000; // in seconds
+          }
+        }
+        return totalSeconds / 3600; // Convert to hours
+      });
+
+      const totalWorkedHours = workedHours.reduce((acc, curr) => acc + curr, 0);
+      const totalEarnings = totalWorkedHours * user.wagePerHour;
+
+      return res.status(200).json({
+        totalWorkedHours: totalWorkedHours.toFixed(2),
+        totalEarnings: totalEarnings.toFixed(2),
+      });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        message: "Error when calculating total earnings",
+        error: err.message,
+      });
+    }
+  },
 };
