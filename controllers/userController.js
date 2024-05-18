@@ -327,5 +327,69 @@ module.exports = {
         error: err.message
       });
     }
+  },
+
+  calculateMostWorkedLastMonth: async function (req, res) {
+    try {
+      const currentTime = new Date();
+      const lastMonth = new Date(currentTime);
+      lastMonth.setMonth(currentTime.getMonth() - 1);
+
+      const users = await UserModel.find();
+
+      let mostWorkedUser = null;
+      let maxWorkedSeconds = 0;
+
+      for (const user of users) {
+        const { dan } = user;
+        let totalWorkedSeconds = 0;
+
+        const relevantDays = dan.filter(day => {
+          const dayDate = new Date(day.datum);
+          return dayDate >= lastMonth && dayDate <= currentTime;
+        });
+
+        relevantDays.forEach(day => {
+          const { vhodi, izhodi } = day;
+          for (let i = 0; i < vhodi.length; i++) {
+            if (izhodi[i]) {
+              const entryTime = new Date(`${day.datum.toISOString().split('T')[0]}T${vhodi[i]}Z`);
+              const exitTime = new Date(`${day.datum.toISOString().split('T')[0]}T${izhodi[i]}Z`);
+              const workedTime = (exitTime - entryTime) / 1000; // in seconds
+              totalWorkedSeconds += workedTime;
+            }
+          }
+        });
+
+        if (totalWorkedSeconds > maxWorkedSeconds) {
+          maxWorkedSeconds = totalWorkedSeconds;
+          mostWorkedUser = user;
+        }
+      }
+
+      if (mostWorkedUser) {
+        const totalWorkedHours = Math.floor(maxWorkedSeconds / 3600);
+        const totalWorkedMinutes = Math.floor((maxWorkedSeconds % 3600) / 60);
+        const totalWorkedSecondsLeft = maxWorkedSeconds % 60;
+
+        return res.status(200).json({
+          userId: mostWorkedUser._id,
+          userName: mostWorkedUser.ime + ' ' + mostWorkedUser.priimek,
+          hours: totalWorkedHours,
+          minutes: totalWorkedMinutes,
+          seconds: totalWorkedSecondsLeft
+        });
+      } else {
+        return res.status(200).json({
+          message: 'No work records found for the last month.'
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        message: 'Error when calculating most worked time',
+        error: err.message
+      });
+    }
   }
 };

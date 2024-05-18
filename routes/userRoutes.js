@@ -11,7 +11,7 @@ router.get("/", auth, userController.list);
 /*
  * GET
  */
-router.get("/:id", auth, userController.show);
+router.get("/get/:id", auth, userController.show);
 
 /*
  * POST
@@ -43,10 +43,15 @@ router.post("/:id/record", auth, userController.recordEntryOrExit);
  */
 router.post("/calculateWorkingHours", userController.calculateWorkedTime);
 
-/*
- * CALCULATE WORKING HOURS
- */
 
-router.post("/checkCurrentStatus", userController.checkCurrentStatus);
+/*
+ * CHECK CURRENT STATUS
+ */
+router.get("/checkCurrentStatus", userController.checkCurrentStatus);
+
+/*
+ * MOST HOURS WORKED IN LAST MONTH
+ */
+router.get("/mostWorkingHours", userController.calculateMostWorkedLastMonth);
 
 module.exports = router;
