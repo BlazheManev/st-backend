@@ -4,6 +4,7 @@ const port = 3000;
 const mongoose = require('mongoose');
 app.use(express.json());
 const path = require('path');
+require('dotenv').config();
 
 const userRoutes = require('./routes/userRoutes'); 
 const connectDB = require('./utilities/databaseConection'); 

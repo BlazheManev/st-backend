@@ -1,6 +1,7 @@
 var UserModel = require('../models/userModel.js');
 var crypto = require('crypto'); 
 const { validatePassword } = require('../utilities/passwordUtility'); // Import the validatePassword function
+const jwt = require('jsonwebtoken');
 
 /**
  * userController.js
@@ -117,33 +118,34 @@ module.exports = {
      */
     login: async function (req, res) {
         try {
-            const user = await UserModel.findOne({ 
-                $or: [{ username: req.body.username }, { email: req.body.email }]
+          const user = await UserModel.findOne({ email: req.body.email });
+          if (!user) {
+            return res.status(401).json({ message: "User not found" });
+          }
+    
+          if (validatePassword(user, req.body.password)) {
+            const payload = {
+              userId: user._id,
+              email: user.email
+            };
+    
+            const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+    
+            return res.status(200).json({
+              message: "Login successful",
+              token: token
             });
-
-            if (!user) {
-                return res.status(401).json({ message: "User not found" });
-            }
-
-            if (validatePassword(user, req.body.password)) {
-                // Password is correct
-                return res.status(200).json({
-                    message: "Login successful",
-                    user: { username: user.username, email: user.email }
-                    //TODO :@BLAZHE  Here you can also generate a token or session for the authenticated user
-                });
-            } else {
-                // Password is incorrect
-                return res.status(401).json({ message: "Login failed" });
-            }
+          } else {
+            return res.status(401).json({ message: "Login failed" });
+          }
         } catch (err) {
-            console.log(err);
-            return res.status(500).json({
-                message: 'Error when trying to login',
-                error: err
-            });
+          console.log(err);
+          return res.status(500).json({
+            message: 'Error when trying to login',
+            error: err
+          });
         }
-    },  
+      },
 
     /**
      * userController.remove()
