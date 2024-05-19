@@ -508,4 +508,32 @@ module.exports = {
       });
     }
   },
+  addEquipment: async function (req, res) {
+    try {
+      const userId = req.params.id;
+      const { name, id, from, to } = req.body;
+
+      const user = await UserModel.findOne({ _id: id });;
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const newEquipment = {
+        name: name,
+        from: new Date(from),
+        to: to ? new Date(to) : null
+      };
+
+      user.equipment.push(newEquipment);
+
+      await user.save();
+      return res.status(200).json(user);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        message: "Error when adding equipment",
+        error: err.message,
+      });
+    }
+  }
 };

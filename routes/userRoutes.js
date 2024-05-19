@@ -42,8 +42,8 @@ router.post("/:id/record", auth, userController.recordEntryOrExit);
  
 CALCULATE WORKING HOURS*/
 router.post(
-  "/calculateWorkingHours",
-  userController.calculateWorkedTimeByInterval
+    "/calculateWorkingHours",
+    userController.calculateWorkedTimeByInterval
 );
 
 /*
@@ -65,5 +65,10 @@ router.get("/:id/working-hours", auth, userController.getWorkingHours);
  
 total-earnings*/
 router.get("/:id/total-earnings", userController.calculateTotalEarnings);
+
+/*
+
+Book equipment*/
+router.post("/book-equipment", userController.addEquipment);
 
 module.exports = router;
