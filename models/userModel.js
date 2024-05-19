@@ -12,6 +12,13 @@ const userSchema = new Schema({
       izhodi: [String],
     },
   ],
+  equipment: [
+    {
+      name: String,
+      from: Date,
+      to: Date
+    }
+  ],
   hash: String,
   salt: String,
   roles: { type: [String], default: ["WORKER"] },
