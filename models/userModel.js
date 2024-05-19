@@ -16,6 +16,7 @@ const userSchema = new Schema({
   salt: String,
   roles: { type: [String], default: ["WORKER"] },
   wagePerHour: { type: Number, required: true },
+  vacationDaysLeft: { type: Number, default: 24 } 
 });
 
 module.exports = mongoose.model("User", userSchema);

@@ -17,7 +17,10 @@ app.use(express.json());
 
 // Include your routes
 const userRoutes = require('./routes/userRoutes');
+const absenceRoutes = require('./routes/absencesRoutes');
+
 app.use('/users', userRoutes);
+app.use('/absence', absenceRoutes);
 
 const staticRoutes = require('./routes/staticRoutes.js');
 app.use(staticRoutes);
