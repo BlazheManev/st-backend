@@ -535,5 +535,35 @@ module.exports = {
         error: err.message,
       });
     }
+  },
+  returnEquipment: async function (req, res) {
+    try {
+      const { userId, equipmentId, returnDate } = req.body;
+
+      const user = await UserModel.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (!user.equipment) {
+        return res.status(400).json({ message: "No equipment found for the user" });
+      }
+
+      const equipment = user.equipment.find(e => e.id === equipmentId);
+      if (!equipment) {
+        return res.status(404).json({ message: "Equipment not found" });
+      }
+
+      equipment.to = new Date(returnDate);
+
+      await user.save();
+      return res.status(200).json(user);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        message: "Error when returning equipment",
+        error: err.message,
+      });
+    }
   }
 };
