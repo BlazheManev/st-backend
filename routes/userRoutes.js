@@ -21,7 +21,7 @@ router.post("/", userController.create);
 /*
  
 PUT*/
-router.put("/:id", auth, userController.update);
+router.put("/update/:id", auth, userController.update);
 
 /*
  
@@ -70,5 +70,10 @@ router.get("/:id/total-earnings", userController.calculateTotalEarnings);
 
 Book equipment*/
 router.post("/book-equipment", userController.addEquipment);
+
+/*
+ 
+Return equipment*/
+router.put("/return-equipment", userController.returnEquipment);
 
 module.exports = router;
