@@ -17,17 +17,22 @@ module.exports = {
 
       // Check if the user is a student
       if (user.roles.includes("STUDENT")) {
-        return res.status(403).json({ message: "Students are not allowed to create absences" });
+        return res
+          .status(403)
+          .json({ message: "Students are not allowed to create absences" });
       }
 
       // Calculate the number of vacation days requested
       const start = new Date(startDate);
       const end = new Date(endDate);
-      const vacationDaysRequested = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+      const vacationDaysRequested =
+        Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
 
       // Check if the user has enough vacation days left
       if (user.vacationDaysLeft < vacationDaysRequested) {
-        return res.status(400).json({ message: "Not enough vacation days left" });
+        return res
+          .status(400)
+          .json({ message: "Not enough vacation days left" });
       }
 
       // Extract the year from the start date
@@ -49,7 +54,7 @@ module.exports = {
           ime: user.ime,
           priimek: user.priimek,
           vacations: [{ startDate, endDate, reason }],
-          year
+          year,
         });
       }
 
@@ -75,9 +80,7 @@ module.exports = {
    */
   list: async function (req, res) {
     try {
-      const userId = req.params.userId;
-      const absences = await AbsenceModel.find({ userId: userId });
-
+      const absences = await AbsenceModel.find();
       return res.status(200).json(absences);
     } catch (err) {
       console.log(err);
@@ -86,5 +89,29 @@ module.exports = {
         error: err,
       });
     }
-  }
+  },
+  /**
+   * absenceController.getAbsencesByUser()
+   */
+  getAbsencesByUser: async function (req, res) {
+    const userId = req.params.userId;
+
+    try {
+      const absences = await AbsenceModel.find({ userId: userId });
+
+      if (!absences) {
+        return res
+          .status(404)
+          .json({ message: "No absences found for this user." });
+      }
+
+      return res.status(200).json(absences);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        message: "Error when getting absences.",
+        error: err,
+      });
+    }
+  },
 };

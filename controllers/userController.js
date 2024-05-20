@@ -209,11 +209,9 @@ module.exports = {
 
         // Check if the last scan type is the same as the current one
         if (lastScanType === type) {
-          return res
-            .status(400)
-            .json({
-              message: `Cannot record the same type (${type}) consecutively.`,
-            });
+          return res.status(400).json({
+            message: `Cannot record the same type (${type}) consecutively.`,
+          });
         }
 
         // Update vhodi or izhodi
@@ -513,7 +511,7 @@ module.exports = {
       const userId = req.params.id;
       const { name, id, from, to } = req.body;
 
-      const user = await UserModel.findOne({ _id: id });;
+      const user = await UserModel.findOne({ _id: id });
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -521,7 +519,7 @@ module.exports = {
       const newEquipment = {
         name: name,
         from: new Date(from),
-        to: to ? new Date(to) : null
+        to: to ? new Date(to) : null,
       };
 
       user.equipment.push(newEquipment);
@@ -546,10 +544,12 @@ module.exports = {
       }
 
       if (!user.equipment) {
-        return res.status(400).json({ message: "No equipment found for the user" });
+        return res
+          .status(400)
+          .json({ message: "No equipment found for the user" });
       }
 
-      const equipment = user.equipment.find(e => e.id === equipmentId);
+      const equipment = user.equipment.find((e) => e.id === equipmentId);
       if (!equipment) {
         return res.status(404).json({ message: "Equipment not found" });
       }
@@ -565,5 +565,5 @@ module.exports = {
         error: err.message,
       });
     }
-  }
+  },
 };

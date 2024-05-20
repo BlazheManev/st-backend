@@ -5,11 +5,16 @@ const auth = require("../middleware/auth");
 /*
  
 POST absences*/
-router.post('/create/new', absenceController.create);
+router.post("/create/new", absenceController.create);
 
 /*
  
 GET absences*/
-router.get('/absences/:userId', auth, absenceController.list);
+router.get("/all", absenceController.list);
+
+/*
+ 
+GET absences by user*/
+router.get("/user/:userId", absenceController.getAbsencesByUser);
 
 module.exports = router;
