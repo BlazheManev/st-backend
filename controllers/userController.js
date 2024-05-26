@@ -120,11 +120,11 @@ module.exports = {
   /**
    * userController.login()
    */
-  login: async function (req, res) {
+ login: async function (req, res) {
     try {
       const user = await UserModel.findOne({ email: req.body.email });
       if (!user) {
-        return res.status(401).json({ message: "User not found" });
+        return res.status(401).json({ message: "Email not found" });
       }
 
       if (validatePassword(user, req.body.password)) {
@@ -143,7 +143,7 @@ module.exports = {
           token: token,
         });
       } else {
-        return res.status(401).json({ message: "Login failed" });
+        return res.status(401).json({ message: "Invalid password" });
       }
     } catch (err) {
       console.log(err);
