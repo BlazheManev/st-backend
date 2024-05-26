@@ -4,7 +4,8 @@ const Schema = mongoose.Schema;
 const vacationSchema = new Schema({
   startDate: { type: Date, required: true },
   endDate: { type: Date, required: true },
-  reason: { type: String, required: true }
+  reason: { type: String, required: true },
+  status: { type: String, default: "waiting for approval" } // Add status field
 });
 
 const absenceSchema = new Schema({

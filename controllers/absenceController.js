@@ -46,14 +46,14 @@ module.exports = {
         if (!absence.vacations) {
           absence.vacations = [];
         }
-        absence.vacations.push({ startDate, endDate, reason });
+        absence.vacations.push({ startDate, endDate, reason, status: "waiting for approval" });
       } else {
         // Create a new absence document
         absence = new AbsenceModel({
           userId,
           ime: user.ime,
           priimek: user.priimek,
-          vacations: [{ startDate, endDate, reason }],
+          vacations: [{ startDate, endDate, reason, status: "waiting for approval" }],
           year,
         });
       }
@@ -61,15 +61,79 @@ module.exports = {
       // Save the absence to the database
       const savedAbsence = await absence.save();
 
-      // Update the user's vacation days left
-      user.vacationDaysLeft -= vacationDaysRequested;
-      await user.save();
-
       return res.status(201).json(savedAbsence);
     } catch (err) {
       console.log(err);
       return res.status(500).json({
         message: "Error when creating absence",
+        error: err,
+      });
+    }
+  },
+
+  /**
+   * absenceController.approveVacation()
+   */
+  approveVacation: async function (req, res) {
+    try {
+      const { absenceId, vacationId } = req.params;
+
+      const absence = await AbsenceModel.findById(absenceId);
+      if (!absence) {
+        return res.status(404).json({ message: "Absence not found" });
+      }
+
+      const vacation = absence.vacations.id(vacationId);
+      if (!vacation) {
+        return res.status(404).json({ message: "Vacation not found" });
+      }
+
+      vacation.status = "approved";
+      await absence.save();
+
+      // Update the user's vacation days left
+      const user = await UserModel.findById(absence.userId);
+      const start = new Date(vacation.startDate);
+      const end = new Date(vacation.endDate);
+      const vacationDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+
+      user.vacationDaysLeft -= vacationDays;
+      await user.save();
+
+      return res.status(200).json(absence);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        message: "Error when approving vacation.",
+        error: err,
+      });
+    }
+  },
+  /**
+   * absenceController.rejectVacation()
+   */
+  rejectVacation: async function (req, res) {
+    try {
+      const { absenceId, vacationId } = req.params;
+
+      const absence = await AbsenceModel.findById(absenceId);
+      if (!absence) {
+        return res.status(404).json({ message: "Absence not found" });
+      }
+
+      const vacation = absence.vacations.id(vacationId);
+      if (!vacation) {
+        return res.status(404).json({ message: "Vacation not found" });
+      }
+
+      vacation.status = "rejected";
+      await absence.save();
+
+      return res.status(200).json(absence);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        message: "Error when rejecting vacation.",
         error: err,
       });
     }
