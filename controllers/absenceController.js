@@ -25,8 +25,10 @@ module.exports = {
       // Calculate the number of vacation days requested
       const start = new Date(startDate);
       const end = new Date(endDate);
-      const vacationDaysRequested =
-        Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+      const vacationDaysRequested = eachDayOfInterval({
+        start,
+        end
+      }).filter(date => date.getDay() !== 0 && date.getDay() !== 6).length;
 
       // Check if the user has enough vacation days left
       if (user.vacationDaysLeft < vacationDaysRequested) {
@@ -89,16 +91,23 @@ module.exports = {
       }
 
       vacation.status = "approved";
-      await absence.save();
 
-      // Update the user's vacation days left
       const user = await UserModel.findById(absence.userId);
       const start = new Date(vacation.startDate);
       const end = new Date(vacation.endDate);
-      const vacationDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+      let vacationDays = 0;
+
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const day = d.getDay();
+        if (day !== 0 && day !== 6) { // Exclude Sunday and Saturday
+          vacationDays++;
+        }
+      }
 
       user.vacationDaysLeft -= vacationDays;
       await user.save();
+
+      await absence.save();
 
       return res.status(200).json(absence);
     } catch (err) {

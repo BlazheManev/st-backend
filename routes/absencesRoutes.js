@@ -19,10 +19,10 @@ router.get("/user/:userId", absenceController.getAbsencesByUser);
 /*
 
   POST approve vacation*/
- router.post('/approve/:absenceId/:vacationId', absenceController.approveVacation);
+router.post('/approve/:absenceId/:vacationId', absenceController.approveVacation);
  /*
 
   POST reject vacation*/
- router.post('/reject/:absenceId/:vacationId', absenceController.rejectVacation);
+router.post('/reject/:absenceId/:vacationId', absenceController.rejectVacation);
 
 module.exports = router;
