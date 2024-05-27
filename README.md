@@ -41,7 +41,7 @@ This is the backend application for the ST-User project. It is built using Node.
 
 ## Running the Application
 
-To run the application locally:
+1. To run the application locally:
 
     ```bash
     npm start
