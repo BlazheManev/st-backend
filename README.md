@@ -34,7 +34,7 @@ This is the backend application for the ST-User project. It is built using Node.
 3. Create a `.env` file in the root directory and add the following environment variables:
 
     ```env
-    PORT=5000
+    PORT=3000
     MONGODB_URI=your_mongodb_uri
     JWT_SECRET=your_jwt_secret
     ```
