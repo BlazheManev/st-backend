@@ -1,9 +1,9 @@
 const webpush = require('web-push');
 
-// VAPID keys should be generated and kept secure
+// Replace these with your newly generated VAPID keys
 const vapidKeys = {
-  publicKey: 'BOmZXhFpI-ghh6CfxnT6SHraz5fQCULI69ZVTHNkl5D7tTl910gUl_ftDvu9b6fj0KDfap-rqe0VnOOqzq_HQ7M',
-  privateKey: 'kXm2OjsmjrR6CShXA7mBh-dWpGfQfiaPdsXO0b7DIFI'
+  publicKey: 'BCkfFHc2vl7Aq9EMEGEyklQrzqEPxouLvD__3iIwr7-nw0I2RddQKylE_5h5BWFrq2P_r7sHAk0ngUHgEKI0IFk',
+  privateKey: 'wBMAs3M_b9IcV62Zk0qXqabJAVbH1VLK6iE-Ibpyb4E'
 };
 
 webpush.setVapidDetails(
@@ -11,3 +11,5 @@ webpush.setVapidDetails(
   vapidKeys.publicKey,
   vapidKeys.privateKey
 );
+
+module.exports = webpush;

@@ -506,6 +506,9 @@ module.exports = {
       });
     }
   },
+  /**
+   * userController.addEquipment()
+   */
   addEquipment: async function (req, res) {
     try {
       const userId = req.params.id;
@@ -534,6 +537,9 @@ module.exports = {
       });
     }
   },
+    /**
+   * userController.returnEquipment()
+   */
   returnEquipment: async function (req, res) {
     try {
       const { userId, equipmentId, returnDate } = req.body;

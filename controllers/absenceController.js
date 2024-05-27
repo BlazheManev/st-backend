@@ -1,5 +1,8 @@
 const AbsenceModel = require("../models/absenceModel.js");
 const UserModel = require("../models/userModel.js");
+const Subscription = require("../models/subscriptionModel");
+const { eachDayOfInterval } = require('date-fns');
+const webpush = require('../utilities/web-push'); // Ensure the correct path
 
 module.exports = {
   /**
@@ -12,29 +15,24 @@ module.exports = {
       // Find the user
       const user = await UserModel.findById(userId);
       if (!user) {
-        return res.status(404).json({ message: "User not found" });
+        return res.status(404).json({ message: 'User not found' });
       }
 
       // Check if the user is a student
-      if (user.roles.includes("STUDENT")) {
-        return res
-          .status(403)
-          .json({ message: "Students are not allowed to create absences" });
+      if (user.roles.includes('STUDENT')) {
+        return res.status(403).json({ message: 'Students are not allowed to create absences' });
       }
 
       // Calculate the number of vacation days requested
       const start = new Date(startDate);
       const end = new Date(endDate);
-      const vacationDaysRequested = eachDayOfInterval({
-        start,
-        end
-      }).filter(date => date.getDay() !== 0 && date.getDay() !== 6).length;
+      const vacationDaysRequested = eachDayOfInterval({ start, end }).filter(
+        (date) => date.getDay() !== 0 && date.getDay() !== 6
+      ).length;
 
       // Check if the user has enough vacation days left
       if (user.vacationDaysLeft < vacationDaysRequested) {
-        return res
-          .status(400)
-          .json({ message: "Not enough vacation days left" });
+        return res.status(400).json({ message: 'Not enough vacation days left' });
       }
 
       // Extract the year from the start date
@@ -48,14 +46,14 @@ module.exports = {
         if (!absence.vacations) {
           absence.vacations = [];
         }
-        absence.vacations.push({ startDate, endDate, reason, status: "waiting for approval" });
+        absence.vacations.push({ startDate, endDate, reason, status: 'waiting for approval' });
       } else {
         // Create a new absence document
         absence = new AbsenceModel({
           userId,
           ime: user.ime,
           priimek: user.priimek,
-          vacations: [{ startDate, endDate, reason, status: "waiting for approval" }],
+          vacations: [{ startDate, endDate, reason, status: 'waiting for approval' }],
           year,
         });
       }
@@ -63,11 +61,31 @@ module.exports = {
       // Save the absence to the database
       const savedAbsence = await absence.save();
 
+      // Send notification to admins
+      const admins = await UserModel.find({ roles: 'ADMIN' });
+      const subscriptions = await Subscription.find({ userId: { $in: admins.map((admin) => admin._id) } });
+
+      console.log(subscriptions)
+      const notificationPayload = {
+        notification: {
+          title: 'New Absence Request',
+          body: `${user.ime} ${user.priimek} has requested an absence.`,
+          icon: '../icons/favicon.png',
+          data: { url: '/vacation-approval' },
+        },
+      };
+
+      subscriptions.forEach((sub) => {
+        webpush.sendNotification(sub.subscription, JSON.stringify(notificationPayload)).catch((error) => {
+          console.error('Error sending notification:', error);
+        });
+      });
+
       return res.status(201).json(savedAbsence);
     } catch (err) {
       console.log(err);
       return res.status(500).json({
-        message: "Error when creating absence",
+        message: 'Error when creating absence',
         error: err,
       });
     }
