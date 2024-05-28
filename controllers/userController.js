@@ -120,11 +120,11 @@ module.exports = {
   /**
    * userController.login()
    */
- login: async function (req, res) {
+  login: async function (req, res) {
     try {
       const user = await UserModel.findOne({ email: req.body.email });
       if (!user) {
-        return res.status(401).json({ message: "Email not found" });
+        return res.status(401).json({ message: "User not found" });
       }
 
       if (validatePassword(user, req.body.password)) {
@@ -143,7 +143,7 @@ module.exports = {
           token: token,
         });
       } else {
-        return res.status(401).json({ message: "Invalid password" });
+        return res.status(401).json({ message: "Login failed" });
       }
     } catch (err) {
       console.log(err);
@@ -506,9 +506,6 @@ module.exports = {
       });
     }
   },
-  /**
-   * userController.addEquipment()
-   */
   addEquipment: async function (req, res) {
     try {
       const userId = req.params.id;
@@ -537,9 +534,6 @@ module.exports = {
       });
     }
   },
-    /**
-   * userController.returnEquipment()
-   */
   returnEquipment: async function (req, res) {
     try {
       const { userId, equipmentId, returnDate } = req.body;
@@ -568,6 +562,68 @@ module.exports = {
       console.error(err);
       return res.status(500).json({
         message: "Error when returning equipment",
+        error: err.message,
+      });
+    }
+  },
+  addEducation: async function (req, res) {
+    try {
+      const userId = req.params.id;
+      const { name, id, from, to, grade, title } = req.body;
+
+      const user = await UserModel.findOne({ _id: id });
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const newEducation = {
+        institution: name,
+        grade: grade,
+        title: title,
+        from: new Date(from),
+        to: to ? new Date(to) : null,
+      };
+
+      user.education.push(newEducation);
+
+      await user.save();
+      return res.status(200).json(user);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        message: "Error when adding equipment",
+        error: err.message,
+      });
+    }
+  },
+  deleteEducation: async function (req, res) {
+    try {
+      const { userId, educationId } = req.body;
+
+      const user = await UserModel.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (!user.education) {
+        return res
+          .status(400)
+          .json({ message: "No education found for the user" });
+      }
+
+      const education = user.education.find((e) => e.id === educationId);
+      if (!education) {
+        return res.status(404).json({ message: "Education not found" });
+      }
+
+      user.education = user.education.filter((e) => e.id !== educationId);
+
+      await user.save();
+      return res.status(200).json(user);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        message: "Error when deleting education",
         error: err.message,
       });
     }
