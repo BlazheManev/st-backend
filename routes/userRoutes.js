@@ -5,83 +5,83 @@ const auth = require("../middleware/auth");
 
 /*
  
-GET/
+GET*/
 router.get("/", auth, userController.list);
 
-/
+/*
  
-GET/
+GET*/
 router.get("/get/:id", auth, userController.show);
 
-/
+/*
  
-POST/
+POST*/
 router.post("/", userController.create);
 
-/
+/*
  
-PUT/
+PUT*/
 router.put("/update/:id", auth, userController.update);
 
-/
+/*
  
-DELETE/
+DELETE*/
 router.delete("/:id", auth, userController.remove);
 
-/
+/*
  
-LOGIN/
+LOGIN*/
 router.post("/login", userController.login);
 
-/
+/*
  
-RECORD/
+RECORD*/
 router.post("/:id/record", auth, userController.recordEntryOrExit);
 
-/
+/*
  
-CALCULATE WORKING HOURS/
+CALCULATE WORKING HOURS*/
 router.post(
     "/calculateWorkingHours",
     userController.calculateWorkedTimeByInterval
 );
 
-/
+/*
  
-CHECK CURRENT STATUS/
+CHECK CURRENT STATUS*/
 router.get("/checkCurrentStatus", userController.checkCurrentStatus);
 
-/
+/*
  
-MOST HOURS WORKED IN LAST MONTH/
+MOST HOURS WORKED IN LAST MONTH*/
 router.get("/mostWorkingHours", userController.calculateMostWorkedLastMonth);
 
-/
+/*
  
-Get Working Hours/
+Get Working Hours*/
 router.get("/:id/working-hours", auth, userController.getWorkingHours);
 
-/
+/*
  
-total-earnings/
+total-earnings*/
 router.get("/:id/total-earnings", userController.calculateTotalEarnings);
 
-/
+/*
 
-Book equipment/
+Book equipment*/
 router.post("/book-equipment", userController.addEquipment);
 
-/
+/*
  
-Return equipment/
+Return equipment*/
 router.put("/return-equipment", userController.returnEquipment);
 
-/
+/*
 
-Add education history for user/
+Add education history for user*/
 router.post("/add-education", userController.addEducation);
 
-/
+/*
 
 Delete education history for user*/
 router.delete("/delete-education", userController.deleteEducation);
