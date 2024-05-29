@@ -59,7 +59,7 @@ router.get("/mostWorkingHours", userController.calculateMostWorkedLastMonth);
 /*
  
 Get Working Hours*/
-router.get("/:id/working-hours", auth, userController.getWorkingHours);
+router.get("/:id/working-hours", userController.getWorkingHours);
 
 /*
  
