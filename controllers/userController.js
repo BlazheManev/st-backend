@@ -628,4 +628,53 @@ module.exports = {
       });
     }
   },
+  calculateEarningsByInterval: async function (req, res) {
+    const { userId, startDate, endDate } = req.body;
+
+    try {
+      const user = await UserModel.findById(userId);
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Convert the input dates to Date objects
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+
+      // Filter records within the date range
+      const relevantDays = user.dan.filter((day) => {
+        const dayDate = new Date(day.datum);
+        return dayDate >= start && dayDate <= end;
+      });
+
+      let totalWorkedSeconds = 0;
+
+      relevantDays.forEach((day) => {
+        const { vhodi, izhodi } = day;
+
+        for (let i = 0; i < vhodi.length; i++) {
+          if (izhodi[i]) {
+            const entryTime = new Date(`${day.datum.toISOString().split("T")[0]}T${vhodi[i]}Z`);
+            const exitTime = new Date(`${day.datum.toISOString().split("T")[0]}T${izhodi[i]}Z`);
+            totalWorkedSeconds += (exitTime - entryTime) / 1000; // in seconds
+          }
+        }
+      });
+
+      const totalWorkedHours = totalWorkedSeconds / 3600;
+      const totalEarnings = totalWorkedHours * user.wagePerHour;
+
+      return res.status(200).json({
+        totalWorkedHours: totalWorkedHours.toFixed(2),
+        totalEarnings: totalEarnings.toFixed(2),
+      });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        message: "Error when calculating earnings",
+        error: err.message,
+      });
+    }
+  },
 };
