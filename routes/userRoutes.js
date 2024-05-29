@@ -11,7 +11,7 @@ router.get("/", auth, userController.list);
 /*
  
 GET*/
-router.get("/get/:id", auth, userController.show);
+router.get("/get/:id", userController.show);
 
 /*
  
@@ -85,4 +85,9 @@ router.post("/add-education", userController.addEducation);
 
 Delete education history for user*/
 router.delete("/delete-education", userController.deleteEducation);
+
+/*
+
+Calculate salary in month*/
+router.post("/calculateMonthlyEarnings", userController.calculateEarningsByInterval);
 module.exports = router;
