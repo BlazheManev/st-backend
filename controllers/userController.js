@@ -655,8 +655,12 @@ module.exports = {
 
         for (let i = 0; i < vhodi.length; i++) {
           if (izhodi[i]) {
-            const entryTime = new Date(`${day.datum.toISOString().split("T")[0]}T${vhodi[i]}Z`);
-            const exitTime = new Date(`${day.datum.toISOString().split("T")[0]}T${izhodi[i]}Z`);
+            const entryTime = new Date(
+              `${day.datum.toISOString().split("T")[0]}T${vhodi[i]}Z`
+            );
+            const exitTime = new Date(
+              `${day.datum.toISOString().split("T")[0]}T${izhodi[i]}Z`
+            );
             totalWorkedSeconds += (exitTime - entryTime) / 1000; // in seconds
           }
         }
@@ -673,6 +677,58 @@ module.exports = {
       console.error(err);
       return res.status(500).json({
         message: "Error when calculating earnings",
+        error: err.message,
+      });
+    }
+  },
+  /**
+   * userController.addSickLeave()
+   */
+  addSickLeave: async function (req, res) {
+    const userId = req.params.id;
+    const { date } = req.body;
+
+    try {
+      const user = await UserModel.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const sickDate = new Date(date);
+      if (
+        user.sickDays &&
+        user.sickDays.some(
+          (d) =>
+            d.toISOString().split("T")[0] ===
+            sickDate.toISOString().split("T")[0]
+        )
+      ) {
+        return res
+          .status(400)
+          .json({ message: "Sick leave already recorded for this date" });
+      }
+
+      if (!user.sickDays) {
+        user.sickDays = [];
+      }
+      user.sickDays.push(sickDate);
+
+      // Mark the day as absence and add 8 working hours
+      const dayEntry = {
+        datum: sickDate,
+        vhodi: ["08:00:00"],
+        izhodi: ["16:00:00"],
+        isAbsent: true, // Add a flag to mark this day as an absence
+      };
+
+      user.dan.push(dayEntry);
+
+      await user.save();
+      return res.status(200).json(user);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        message: "Error when adding sick leave",
         error: err.message,
       });
     }

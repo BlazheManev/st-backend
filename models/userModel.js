@@ -33,6 +33,7 @@ const userSchema = new Schema({
   roles: { type: [String], default: ["WORKER"] },
   wagePerHour: { type: Number, required: true },
   vacationDaysLeft: { type: Number, default: 24 },
+  sickDays: [{ type: Date }] // Add this line for sick days
 });
 
 module.exports = mongoose.model("User", userSchema);
