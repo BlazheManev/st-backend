@@ -696,7 +696,7 @@ module.exports = {
   
       const targetDate = new Date(date);
   
-      if (type === "sickLeave") {
+      if (type === "Sick Leave") {
         if (
           user.sickDays &&
           user.sickDays.some(
@@ -725,7 +725,7 @@ module.exports = {
         };
   
         user.dan.push(dayEntry);
-      } else if (type === "workFromHome") {
+      } else if (type === "Work From Home") {
         // Mark the day as work from home
         const dayEntry = {
           datum: targetDate,
