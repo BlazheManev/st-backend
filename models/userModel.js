@@ -1,17 +1,19 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
+const daySchema = new Schema({
+  datum: Date,
+  vhodi: [String],
+  izhodi: [String],
+  isAbsent: { type: Boolean, default: false },
+  workLocation: { type: String, enum: ['office', 'home'], default: 'office' } // Add this field to store work location
+});
+
 const userSchema = new Schema({
   ime: String,
   priimek: String,
   email: String,
-  dan: [
-    {
-      datum: Date,
-      vhodi: [String],
-      izhodi: [String],
-    },
-  ],
+  dan: [daySchema],
   equipment: [
     {
       name: String,

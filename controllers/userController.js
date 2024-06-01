@@ -682,55 +682,70 @@ module.exports = {
     }
   },
   /**
-   * userController.addSickLeave()
+   * userController.addSickLeaveOrWorkFromHome()
    */
-  addSickLeave: async function (req, res) {
+  addSickLeaveOrWorkFromHome: async function (req, res) {
     const userId = req.params.id;
-    const { date } = req.body;
-
+    const { date, startTime, endTime, type } = req.body;
+  
     try {
       const user = await UserModel.findById(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-
-      const sickDate = new Date(date);
-      if (
-        user.sickDays &&
-        user.sickDays.some(
-          (d) =>
-            d.toISOString().split("T")[0] ===
-            sickDate.toISOString().split("T")[0]
-        )
-      ) {
-        return res
-          .status(400)
-          .json({ message: "Sick leave already recorded for this date" });
+  
+      const targetDate = new Date(date);
+  
+      if (type === "sickLeave") {
+        if (
+          user.sickDays &&
+          user.sickDays.some(
+            (d) =>
+              d.toISOString().split("T")[0] ===
+              targetDate.toISOString().split("T")[0]
+          )
+        ) {
+          return res
+            .status(400)
+            .json({ message: "Sick leave already recorded for this date" });
+        }
+  
+        if (!user.sickDays) {
+          user.sickDays = [];
+        }
+        user.sickDays.push(targetDate);
+  
+        // Mark the day as absence and add 8 working hours
+        const dayEntry = {
+          datum: targetDate,
+          vhodi: ["08:00:00"],
+          izhodi: ["16:00:00"],
+          isAbsent: true,
+          workLocation: "office",
+        };
+  
+        user.dan.push(dayEntry);
+      } else if (type === "workFromHome") {
+        // Mark the day as work from home
+        const dayEntry = {
+          datum: targetDate,
+          vhodi: [startTime],
+          izhodi: [endTime],
+          isAbsent: false,
+          workLocation: "home",
+        };
+  
+        user.dan.push(dayEntry);
       }
-
-      if (!user.sickDays) {
-        user.sickDays = [];
-      }
-      user.sickDays.push(sickDate);
-
-      // Mark the day as absence and add 8 working hours
-      const dayEntry = {
-        datum: sickDate,
-        vhodi: ["08:00:00"],
-        izhodi: ["16:00:00"],
-        isAbsent: true, // Add a flag to mark this day as an absence
-      };
-
-      user.dan.push(dayEntry);
-
+  
       await user.save();
       return res.status(200).json(user);
     } catch (err) {
       console.error(err);
       return res.status(500).json({
-        message: "Error when adding sick leave",
+        message: "Error when adding sick leave or work from home day",
         error: err.message,
       });
     }
-  },
+  },  
 };

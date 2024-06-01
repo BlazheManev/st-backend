@@ -36,7 +36,7 @@ router.post("/login", userController.login);
 /*
  
 RECORD*/
-router.post("/:id/record", auth, userController.recordEntryOrExit);
+router.post("/:id/record", userController.recordEntryOrExit);
 
 /*
  
@@ -90,4 +90,7 @@ router.delete("/delete-education", userController.deleteEducation);
 
 Calculate salary in month*/
 router.post("/calculateMonthlyEarnings", userController.calculateEarningsByInterval);
+
+router.post("/add-sick-leave-or-work-from-home/:id", userController.addSickLeaveOrWorkFromHome);
+
 module.exports = router;
